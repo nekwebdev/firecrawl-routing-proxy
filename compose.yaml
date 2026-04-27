@@ -1,0 +1,32 @@
+services:
+  websearch-searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: websearch-searxng
+    restart: unless-stopped
+    environment:
+      - BASE_URL=http://websearch-searxng:8080/
+      - INSTANCE_NAME=websearch-searxng
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+
+  websearch-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: websearch-proxy:local
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8082:8080"
+    depends_on:
+      websearch-searxng:
+        condition: service_healthy
+    volumes:
+      - tavily-budget-data:/data
+
+volumes:
+  tavily-budget-data:
