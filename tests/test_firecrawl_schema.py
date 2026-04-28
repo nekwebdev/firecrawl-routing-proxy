@@ -47,6 +47,34 @@ def test_firecrawl_subset_schema_and_ignores_unknown(monkeypatch) -> None:
     assert item["provider"] == "searxng"
 
 
+def test_v2_search_alias_uses_same_handler(monkeypatch) -> None:
+    monkeypatch.setenv("FIRECRAWL_API_KEY", "")
+    app = create_app()
+
+    class FakeRouter:
+        async def search(self, payload):
+            return {
+                "success": True,
+                "data": [
+                    {
+                        "url": "https://example.com/v2",
+                        "title": "Example V2",
+                        "source": "https://example.com/v2",
+                        "provider": "searxng",
+                    }
+                ],
+            }
+
+    app.state.router_engine = FakeRouter()
+    client = TestClient(app)
+
+    response = client.post("/v2/search", json={"query": "hello"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"][0]["url"] == "https://example.com/v2"
+
+
 def test_malformed_input_returns_clear_error(monkeypatch) -> None:
     monkeypatch.setenv("FIRECRAWL_API_KEY", "")
     client = TestClient(create_app())

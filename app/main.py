@@ -49,6 +49,7 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     @app.post("/v1/search", response_model=SearchResponse)
+    @app.post("/v2/search", response_model=SearchResponse)
     async def search(
         payload: SearchRequest,
         authorization: str | None = Header(default=None),
