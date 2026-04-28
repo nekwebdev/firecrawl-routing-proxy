@@ -29,6 +29,11 @@ class SearxngProvider:
             response = await client.get(
                 f"{self.settings.searxng_base_url.rstrip('/')}/search",
                 params=params,
+                headers={
+                    "User-Agent": "firecrawl-routing-proxy/0.1",
+                    "X-Forwarded-For": "127.0.0.1",
+                    "X-Real-IP": "127.0.0.1",
+                },
             )
             response.raise_for_status()
             data = response.json()

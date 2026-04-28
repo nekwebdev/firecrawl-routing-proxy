@@ -8,10 +8,13 @@ Architecture summary
 - Providers: Tavily + SearXNG adapters via httpx
 - Budget guard: local SQLite counters (daily soft cap, monthly cap, critical reserve)
 - Logging: structured route decision logs using query hash (no raw query by default)
+- SearXNG config: repo-managed searxng/settings.yml mounted into container; JSON format explicitly enabled for proxy API calls
 
 Endpoints
 - GET /healthz -> {"status":"ok"}
 - POST /v1/search
+- POST /v2/search
+  - /v1/search and /v2/search are same handler and same response semantics
   - Input subset: query (required), maxResults, timeout, locale, scrapeOptions (+ unknown fields safely ignored)
   - Output subset: success, data[], error
   - data[] entries include url/title/description|markdown|content plus source/provider when available
@@ -26,9 +29,10 @@ Routing behavior (opinionated defaults)
 Execution flow
 1) classify query hard/quick
 2) call primary provider
-3) on failure/timeout/empty, call fallback provider
+3) on failure/timeout/empty, call fallback provider (quick: searxng retry, hard: tavily -> searxng)
 4) quick-route escalation path exists but disabled by default
 5) hard queries enforce citation presence; may retry via Tavily, else explicit failure
+6) if all providers fail, return structured error: providers_failed:<provider>:<ErrorClass>[:<upstream_status>]
 
 Budget logic
 - Persist calls in /data/tavily_budget.sqlite3 (in container; named volume)

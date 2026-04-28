@@ -75,6 +75,36 @@ def test_v2_search_alias_uses_same_handler(monkeypatch) -> None:
     assert body["data"][0]["url"] == "https://example.com/v2"
 
 
+def test_v1_v2_parity_same_payload_same_response(monkeypatch) -> None:
+    monkeypatch.setenv("FIRECRAWL_API_KEY", "")
+    app = create_app()
+
+    class FakeRouter:
+        async def search(self, payload):
+            return {
+                "success": True,
+                "data": [
+                    {
+                        "url": f"https://example.com/{payload.query}",
+                        "title": "Parity",
+                        "source": f"https://example.com/{payload.query}",
+                        "provider": "searxng",
+                    }
+                ],
+            }
+
+    app.state.router_engine = FakeRouter()
+    client = TestClient(app)
+
+    payload = {"query": "same", "maxResults": 3, "locale": "en"}
+    r1 = client.post("/v1/search", json=payload)
+    r2 = client.post("/v2/search", json=payload)
+
+    assert r1.status_code == 200
+    assert r2.status_code == 200
+    assert r1.json() == r2.json()
+
+
 def test_malformed_input_returns_clear_error(monkeypatch) -> None:
     monkeypatch.setenv("FIRECRAWL_API_KEY", "")
     client = TestClient(create_app())
