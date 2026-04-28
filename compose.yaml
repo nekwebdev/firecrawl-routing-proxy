@@ -1,12 +1,13 @@
 services:
   websearch-searxng:
-    image: docker.io/searxng/searxng:latest
+    build:
+      context: ./searxng
+      dockerfile: Dockerfile
+    image: websearch-searxng:2026.4.24-a7ac696b4
     restart: unless-stopped
     environment:
       - BASE_URL=http://websearch-searxng:8080/
       - INSTANCE_NAME=websearch-searxng
-    volumes:
-      - ./searxng/settings.yml:/etc/searxng/settings.yml
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/"]
       interval: 20s

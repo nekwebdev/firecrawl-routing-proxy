@@ -8,7 +8,7 @@ Architecture summary
 - Providers: Tavily + SearXNG adapters via httpx
 - Budget guard: local SQLite counters (daily soft cap, monthly cap, critical reserve)
 - Logging: structured route decision logs using query hash (no raw query by default)
-- SearXNG config: repo-managed searxng/settings.yml mounted into container; JSON format explicitly enabled for proxy API calls
+- SearXNG runtime: custom pinned image docker.io/searxng/searxng:2026.4.24-a7ac696b4 with baked settings.yml and startup validation guard for required JSON format
 
 Endpoints
 - GET /healthz -> {"status":"ok"}

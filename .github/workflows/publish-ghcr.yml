@@ -3,7 +3,7 @@ name: publish-ghcr
 on:
   push:
     branches: ["main"]
-    tags: ["v*"]
+    tags: ["v*", "*.*.*"]
   workflow_dispatch:
 
 permissions:
@@ -35,8 +35,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
+      - name: Extract proxy Docker metadata
+        id: meta_proxy
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE_NAME }}
@@ -46,14 +46,35 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push
+      - name: Build and push proxy
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
           push: true
           platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_proxy.outputs.tags }}
+          labels: ${{ steps.meta_proxy.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract SearXNG Docker metadata
+        id: meta_searxng
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/websearch-searxng
+          tags: |
+            type=raw,value=2026.4.24-a7ac696b4
+            type=sha,prefix=sha-
+
+      - name: Build and push SearXNG
+        uses: docker/build-push-action@v7
+        with:
+          context: ./searxng
+          file: ./searxng/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta_searxng.outputs.tags }}
+          labels: ${{ steps.meta_searxng.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
