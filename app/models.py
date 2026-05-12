@@ -28,9 +28,15 @@ class SearchResult(BaseModel):
     provider: str | None = None
 
 
+class SearchResponseData(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    web: list[SearchResult] = Field(default_factory=list)
+
+
 class SearchResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     success: bool
-    data: list[SearchResult] = Field(default_factory=list)
+    data: SearchResponseData = Field(default_factory=SearchResponseData)
     error: str | None = None

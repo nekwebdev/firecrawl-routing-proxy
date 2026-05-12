@@ -93,7 +93,7 @@ async def test_hard_query_prefers_tavily(tmp_path: Path) -> None:
 
     result = await engine.search(SearchRequest(query="Need legal citations for this claim"))
     assert result.success is True
-    assert result.data[0].provider == "tavily"
+    assert result.data.web[0].provider == "tavily"
 
 
 @pytest.mark.asyncio
@@ -116,7 +116,7 @@ async def test_fallback_to_searxng_when_tavily_fails(tmp_path: Path) -> None:
 
     result = await engine.search(SearchRequest(query="fact check this statement with sources"))
     assert result.success is True
-    assert result.data[0].provider == "searxng"
+    assert result.data.web[0].provider == "searxng"
 
 
 @pytest.mark.asyncio
@@ -155,7 +155,7 @@ async def test_quick_query_retries_searxng_after_403_and_can_succeed(tmp_path: P
 
     result = await engine.search(SearchRequest(query="quick query"))
     assert result.success is True
-    assert result.data[0].provider == "searxng"
+    assert result.data.web[0].provider == "searxng"
 
 
 @pytest.mark.asyncio

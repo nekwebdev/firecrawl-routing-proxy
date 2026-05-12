@@ -14,15 +14,17 @@ def test_firecrawl_subset_schema_and_ignores_unknown(monkeypatch) -> None:
             assert payload.locale == "en-US"
             return {
                 "success": True,
-                "data": [
-                    {
-                        "url": "https://example.com",
-                        "title": "Example",
-                        "description": "desc",
-                        "source": "https://example.com",
-                        "provider": "searxng",
-                    }
-                ],
+                "data": {
+                    "web": [
+                        {
+                            "url": "https://example.com",
+                            "title": "Example",
+                            "description": "desc",
+                            "source": "https://example.com",
+                            "provider": "searxng",
+                        }
+                    ]
+                },
             }
 
     app.state.router_engine = FakeRouter()
@@ -41,8 +43,9 @@ def test_firecrawl_subset_schema_and_ignores_unknown(monkeypatch) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["success"] is True
-    assert isinstance(body["data"], list)
-    item = body["data"][0]
+    assert isinstance(body["data"], dict)
+    assert isinstance(body["data"]["web"], list)
+    item = body["data"]["web"][0]
     assert item["url"] == "https://example.com"
     assert item["provider"] == "searxng"
 
@@ -55,14 +58,16 @@ def test_v2_search_alias_uses_same_handler(monkeypatch) -> None:
         async def search(self, payload):
             return {
                 "success": True,
-                "data": [
-                    {
-                        "url": "https://example.com/v2",
-                        "title": "Example V2",
-                        "source": "https://example.com/v2",
-                        "provider": "searxng",
-                    }
-                ],
+                "data": {
+                    "web": [
+                        {
+                            "url": "https://example.com/v2",
+                            "title": "Example V2",
+                            "source": "https://example.com/v2",
+                            "provider": "searxng",
+                        }
+                    ]
+                },
             }
 
     app.state.router_engine = FakeRouter()
@@ -72,7 +77,53 @@ def test_v2_search_alias_uses_same_handler(monkeypatch) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["success"] is True
-    assert body["data"][0]["url"] == "https://example.com/v2"
+    assert body["data"]["web"][0]["url"] == "https://example.com/v2"
+
+
+def test_search_response_matches_firecrawl_v2_sdk_shape(monkeypatch) -> None:
+    monkeypatch.setenv("FIRECRAWL_API_KEY", "")
+    app = create_app()
+
+    class FakeRouter:
+        async def search(self, payload):
+            return {
+                "success": True,
+                "data": {
+                    "web": [
+                        {
+                            "url": "https://example.com/sdk",
+                            "title": "SDK",
+                            "source": "https://example.com/sdk",
+                            "provider": "searxng",
+                        }
+                    ]
+                },
+            }
+
+    app.state.router_engine = FakeRouter()
+    client = TestClient(app)
+
+    response = client.post("/v2/search", json={"query": "hello"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body == {
+        "success": True,
+        "data": {
+            "web": [
+                {
+                    "url": "https://example.com/sdk",
+                    "title": "SDK",
+                    "description": None,
+                    "markdown": None,
+                    "content": None,
+                    "metadata": None,
+                    "source": "https://example.com/sdk",
+                    "provider": "searxng",
+                }
+            ]
+        },
+        "error": None,
+    }
 
 
 def test_v1_v2_parity_same_payload_same_response(monkeypatch) -> None:
@@ -83,14 +134,16 @@ def test_v1_v2_parity_same_payload_same_response(monkeypatch) -> None:
         async def search(self, payload):
             return {
                 "success": True,
-                "data": [
-                    {
-                        "url": f"https://example.com/{payload.query}",
-                        "title": "Parity",
-                        "source": f"https://example.com/{payload.query}",
-                        "provider": "searxng",
-                    }
-                ],
+                "data": {
+                    "web": [
+                        {
+                            "url": f"https://example.com/{payload.query}",
+                            "title": "Parity",
+                            "source": f"https://example.com/{payload.query}",
+                            "provider": "searxng",
+                        }
+                    ]
+                },
             }
 
     app.state.router_engine = FakeRouter()

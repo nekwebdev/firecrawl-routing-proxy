@@ -251,7 +251,7 @@ class RouterEngine:
                     provider_attempts,
                 )
                 return SearchResponse(
-                    success=False, data=[], error="citations_required_not_satisfied"
+                    success=False, data={"web": []}, error="citations_required_not_satisfied"
                 )
 
         fail_reason = self._collapse_fail_reason(provider_attempts)
@@ -268,8 +268,8 @@ class RouterEngine:
         )
 
         if not data:
-            return SearchResponse(success=False, data=[], error=fail_reason)
-        return SearchResponse(success=True, data=data)
+            return SearchResponse(success=False, data={"web": []}, error=fail_reason)
+        return SearchResponse(success=True, data={"web": data})
 
     def _log(
         self,

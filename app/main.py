@@ -36,7 +36,7 @@ def create_app() -> FastAPI:
         reserve_percent_critical=settings.tavily_reserve_percent_critical,
     )
 
-    app = FastAPI(title="firecrawl-routing-proxy", version="0.1.3")
+    app = FastAPI(title="firecrawl-routing-proxy", version="0.1.4")
     app.state.router_engine = RouterEngine(
         settings=settings,
         budget=budget,
