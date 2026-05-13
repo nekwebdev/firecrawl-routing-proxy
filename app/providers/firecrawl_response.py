@@ -41,7 +41,7 @@ def normalize_results(raw_items: list[dict], provider: str) -> list[SearchResult
             SearchResult(
                 url=url,
                 title=item.get("title"),
-                description=item.get("description") or item.get("snippet"),
+                description=item.get("description") or item.get("snippet") or item.get("content"),
                 markdown=item.get("markdown"),
                 content=item.get("content") or item.get("raw_content"),
                 metadata=item.get("metadata") if isinstance(item.get("metadata"), dict) else None,

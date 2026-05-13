@@ -10,6 +10,7 @@ class SearchRequest(BaseModel):
 
     query: str = Field(min_length=1)
     max_results: int | None = Field(default=None, alias="maxResults", ge=1, le=20)
+    limit: int | None = Field(default=None, ge=1, le=20)
     timeout: float | None = Field(default=None, ge=0.1, le=60)
     locale: str | None = None
     scrape_options: dict[str, Any] | None = Field(default=None, alias="scrapeOptions")
@@ -39,4 +40,27 @@ class SearchResponse(BaseModel):
 
     success: bool
     data: SearchResponseData = Field(default_factory=SearchResponseData)
+    error: str | None = None
+
+
+class FirecrawlSearchResult(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    url: str
+    title: str | None = None
+    description: str | None = None
+    category: str | None = None
+
+
+class FirecrawlSearchResponseData(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    web: list[FirecrawlSearchResult] = Field(default_factory=list)
+
+
+class FirecrawlSearchResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    success: bool
+    data: FirecrawlSearchResponseData = Field(default_factory=FirecrawlSearchResponseData)
     error: str | None = None

@@ -135,27 +135,26 @@ async def test_hard_query_fails_without_citations(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_quick_query_retries_searxng_after_403_and_can_succeed(tmp_path: Path) -> None:
-    searx_results = [
+async def test_quick_query_falls_back_to_tavily_after_searxng_403(tmp_path: Path) -> None:
+    tavily_results = [
         SearchResult(
             url="https://fallback.example.com",
             title="Retry ok",
             description="ok",
             source="https://fallback.example.com",
-            provider="searxng",
+            provider="tavily",
         )
     ]
-    searx = FakeSearxngFailThenSuccess(results=searx_results)
     engine = RouterEngine(
         settings=make_settings(),
         budget=make_budget(tmp_path),
-        tavily_provider=FakeTavily(results=[]),
-        searxng_provider=searx,
+        tavily_provider=FakeTavily(results=tavily_results),
+        searxng_provider=FakeSearxngHttp403(),
     )
 
     result = await engine.search(SearchRequest(query="quick query"))
     assert result.success is True
-    assert result.data.web[0].provider == "searxng"
+    assert result.data.web[0].provider == "tavily"
 
 
 @pytest.mark.asyncio
@@ -173,4 +172,5 @@ async def test_quick_query_structured_error_when_searxng_primary_and_retry_fail(
     assert result.success is False
     assert result.error is not None
     assert result.error.startswith("providers_failed:")
-    assert result.error.count("searxng:HTTPStatusError:403") == 2
+    assert "searxng:HTTPStatusError:403" in result.error
+    assert "tavily:RuntimeError" in result.error

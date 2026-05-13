@@ -16,7 +16,7 @@ from app.providers.tavily import TavilyProvider
 HARD_PROVIDER = "tavily"
 QUICK_PROVIDER = "searxng"
 HARD_FALLBACK_PROVIDER = "searxng"
-QUICK_FALLBACK_PROVIDER = "searxng"
+QUICK_FALLBACK_PROVIDER = "tavily"
 REQUIRE_CITATIONS_FOR_HARD = True
 ESCALATE_ON_LOW_CONFIDENCE = False
 LOW_CONFIDENCE_THRESHOLD = 0.35
@@ -90,7 +90,7 @@ class RouterEngine:
         *,
         is_critical: bool,
     ):
-        max_results = req.max_results or self.settings.default_max_results
+        max_results = req.max_results or req.limit or self.settings.default_max_results
         timeout_seconds = req.timeout or self.settings.request_timeout_seconds
 
         if provider_name == "tavily":

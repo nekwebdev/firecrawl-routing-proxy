@@ -7,7 +7,7 @@ from fastapi import FastAPI, Header, HTTPException
 
 from app.budget import TavilyBudgetGuard
 from app.config import DEFAULT_BUDGET_DB_PATH, Settings
-from app.models import SearchRequest, SearchResponse
+from app.models import FirecrawlSearchResponse, SearchRequest, SearchResponse
 from app.providers.searxng import SearxngProvider
 from app.providers.tavily import TavilyProvider
 from app.routing import RouterEngine
@@ -48,8 +48,8 @@ def create_app() -> FastAPI:
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.post("/v1/search", response_model=SearchResponse)
-    @app.post("/v2/search", response_model=SearchResponse)
+    @app.post("/v1/search", response_model=FirecrawlSearchResponse)
+    @app.post("/v2/search", response_model=FirecrawlSearchResponse)
     async def search(
         payload: SearchRequest,
         authorization: str | None = Header(default=None),

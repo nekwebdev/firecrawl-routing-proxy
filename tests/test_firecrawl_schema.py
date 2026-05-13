@@ -46,8 +46,30 @@ def test_firecrawl_subset_schema_and_ignores_unknown(monkeypatch) -> None:
     assert isinstance(body["data"], dict)
     assert isinstance(body["data"]["web"], list)
     item = body["data"]["web"][0]
-    assert item["url"] == "https://example.com"
-    assert item["provider"] == "searxng"
+    assert item == {
+        "url": "https://example.com",
+        "title": "Example",
+        "description": "desc",
+        "category": None,
+    }
+
+
+def test_firecrawl_sdk_limit_alias_is_accepted(monkeypatch) -> None:
+    monkeypatch.setenv("FIRECRAWL_API_KEY", "")
+    app = create_app()
+
+    class FakeRouter:
+        async def search(self, payload):
+            assert payload.max_results is None
+            assert payload.limit == 2
+            return {"success": True, "data": {"web": []}}
+
+    app.state.router_engine = FakeRouter()
+    client = TestClient(app)
+
+    response = client.post("/v2/search", json={"query": "hello", "limit": 2})
+    assert response.status_code == 200
+    assert response.json()["data"]["web"] == []
 
 
 def test_v2_search_alias_uses_same_handler(monkeypatch) -> None:
@@ -114,11 +136,7 @@ def test_search_response_matches_firecrawl_v2_sdk_shape(monkeypatch) -> None:
                     "url": "https://example.com/sdk",
                     "title": "SDK",
                     "description": None,
-                    "markdown": None,
-                    "content": None,
-                    "metadata": None,
-                    "source": "https://example.com/sdk",
-                    "provider": "searxng",
+                    "category": None,
                 }
             ]
         },
