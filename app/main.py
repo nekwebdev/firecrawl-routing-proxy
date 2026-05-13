@@ -7,10 +7,17 @@ from fastapi import FastAPI, Header, HTTPException
 
 from app.budget import TavilyBudgetGuard
 from app.config import DEFAULT_BUDGET_DB_PATH, Settings
-from app.models import FirecrawlSearchResponse, SearchRequest, SearchResponse
+from app.models import (
+    FirecrawlSearchResponse,
+    ScrapeRequest,
+    ScrapeResponse,
+    SearchRequest,
+    SearchResponse,
+)
 from app.providers.searxng import SearxngProvider
 from app.providers.tavily import TavilyProvider
 from app.routing import RouterEngine
+from app.scrape import ScrapeService
 
 
 def _api_key_ok(settings: Settings, authorization: str | None, x_api_key: str | None) -> bool:
@@ -43,6 +50,7 @@ def create_app() -> FastAPI:
         tavily_provider=TavilyProvider(settings),
         searxng_provider=SearxngProvider(settings),
     )
+    app.state.scrape_service = ScrapeService(settings)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
@@ -58,6 +66,16 @@ def create_app() -> FastAPI:
         if not _api_key_ok(settings, authorization, x_api_key):
             raise HTTPException(status_code=401, detail="invalid_api_key")
         return await app.state.router_engine.search(payload)
+
+    @app.post("/v2/scrape", response_model=ScrapeResponse)
+    async def scrape(
+        payload: ScrapeRequest,
+        authorization: str | None = Header(default=None),
+        x_api_key: str | None = Header(default=None, alias="x-api-key"),
+    ) -> ScrapeResponse:
+        if not _api_key_ok(settings, authorization, x_api_key):
+            raise HTTPException(status_code=401, detail="invalid_api_key")
+        return await app.state.scrape_service.scrape(payload)
 
     return app
 
